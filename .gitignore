@@ -1,0 +1,11 @@
+# Build artifacts
+build_tmp/
+__pycache__/
+*.spec
+*.pyc
+
+# Per-user runtime config (now lives in %APPDATA%, but ignore any local copy)
+config.json
+
+# The built exe — ship it via GitHub Releases, not in the repo (it's ~42 MB)
+LagSwitch.exe
