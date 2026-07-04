@@ -12,7 +12,7 @@ REM --collect-all pydivert bundles the WinDivert .dll/.sys driver (WINDIVERT met
 pyinstaller --onefile --windowed --uac-admin --name "LagSwitch" ^
     --icon "%~dp0LagSwitch.ico" --add-data "%~dp0LagSwitch.ico;." ^
     --collect-all pydivert ^
-    --distpath . --workpath build_tmp --specpath build_tmp "%~dp0main.py"
+    --distpath . --workpath build_tmp --specpath build_tmp "%~dp0legmanlagswitch.py"
 
 echo.
 echo Cleaning up...

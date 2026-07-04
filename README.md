@@ -48,7 +48,7 @@ and the WinDivert handle is closed on stop and close — you can never be left
 blocked.
 
 ## Building it yourself
-The source is `main.py` (Python + PySide6).
+The source is `legmanlagswitch.py` (Python + PySide6).
 
 ```
 pip install -r requirements.txt
