@@ -13,10 +13,10 @@ echo.
 echo   This removes everything Legman LagSwitch created for the current
 echo   user account:
 echo.
+echo     - the WinDivert driver service
 echo     - the Windows Firewall rules it uses (LagSwitch_Block)
 echo     - the app data folder  %%APPDATA%%\LegmanLagSwitch
 echo       (your saved bind key, mode, and method)
-echo     - re-enables Windows notifications, in case a crash left them off
 echo.
 echo   It needs administrator rights to remove the firewall rules, so
 echo   Windows will show a UAC prompt. LagSwitch.exe is left alone -
@@ -36,23 +36,19 @@ if %errorlevel% neq 0 (
 
 :dowork
 echo.
-echo   [1/5] Closing LagSwitch if it's running...
+echo   [1/4] Closing LagSwitch if it's running...
 taskkill /f /im LagSwitch.exe >nul 2>&1
 
-echo   [2/5] Unloading the WinDivert driver...
+echo   [2/4] Unloading the WinDivert driver...
 sc stop WinDivert >nul 2>&1
 sc delete WinDivert >nul 2>&1
 
-echo   [3/5] Removing firewall rules...
+echo   [3/4] Removing firewall rules...
 netsh advfirewall firewall delete rule name=LagSwitch_Block >nul 2>&1
 netsh advfirewall firewall delete rule name=LagSwitch_Block_Out >nul 2>&1
 netsh advfirewall firewall delete rule name=LagSwitch_Block_In >nul 2>&1
 
-echo   [4/5] Re-enabling Windows notifications...
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\PushNotifications" /v ToastEnabled /t REG_DWORD /d 1 /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings" /v NOC_GLOBAL_SETTING_TOASTS_ENABLED /t REG_DWORD /d 1 /f >nul 2>&1
-
-echo   [5/5] Deleting app data folder...
+echo   [4/4] Deleting app data folder...
 if defined APPDATA (
     rmdir /s /q "%APPDATA%\LegmanLagSwitch" >nul 2>&1
 ) else (

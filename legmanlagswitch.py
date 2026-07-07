@@ -4,7 +4,6 @@ import sys
 import json
 import time
 import ctypes
-import winreg
 import threading
 import subprocess
 
@@ -188,10 +187,7 @@ class DhcpController:
 
     def teardown(self):
         if self.disabled:
-            try:
-                _run(["ipconfig", "/renew"])
-            except subprocess.CalledProcessError:
-                _run(["ipconfig", "/renew"], check=False)
+            _run(["ipconfig", "/renew"], check=False)
             self.disabled = False
 
 
@@ -318,62 +314,6 @@ def make_controller(method):
     if method == "dhcp":
         return DhcpController()
     return FirewallController()
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Windows notification silencer
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-class NotificationSilencer:
-    """
-    Flips Windows' master "Notifications" toggles off while active and restores
-    them afterwards, so no toast banners pop up over your game. We remember the
-    previous values and put them back, so we never leave you permanently muted.
-    """
-
-    _KEYS = [
-        (r"Software\Microsoft\Windows\CurrentVersion\Notifications\Settings",
-         "NOC_GLOBAL_SETTING_TOASTS_ENABLED"),
-        (r"Software\Microsoft\Windows\CurrentVersion\PushNotifications",
-         "ToastEnabled"),
-    ]
-
-    def __init__(self):
-        self._saved = {}
-        self._active = False
-
-    def silence(self):
-        if self._active:
-            return
-        for path, name in self._KEYS:
-            self._saved[(path, name)] = self._read(path, name)
-            self._write(path, name, 0)
-        self._active = True
-
-    def restore(self):
-        if not self._active:
-            return
-        for path, name in self._KEYS:
-            prev = self._saved.get((path, name))
-            self._write(path, name, 1 if prev is None else prev)
-        self._active = False
-
-    @staticmethod
-    def _read(path, name):
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path) as k:
-                return winreg.QueryValueEx(k, name)[0]
-        except OSError:
-            return None
-
-    @staticmethod
-    def _write(path, name, value):
-        try:
-            with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, path, 0,
-                                    winreg.KEY_SET_VALUE) as k:
-                winreg.SetValueEx(k, name, 0, winreg.REG_DWORD, int(value))
-        except OSError:
-            pass
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -550,7 +490,6 @@ class LagSwitchWindow(QtWidgets.QWidget):
         super().__init__()
         self.cfg = load_config()
         self.net = None
-        self.silencer = NotificationSilencer()
         self.running = False
         self.capturing = False
         self._drag_pos = None
@@ -797,8 +736,6 @@ class LagSwitchWindow(QtWidgets.QWidget):
             self.net = None
             return
 
-        self.silencer.silence()
-
         self.running = True
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
@@ -814,7 +751,6 @@ class LagSwitchWindow(QtWidgets.QWidget):
         if self.net:
             self.net.teardown()
             self.net = None
-        self.silencer.restore()
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self._set_config_enabled(True)
@@ -852,7 +788,6 @@ class LagSwitchWindow(QtWidgets.QWidget):
             self._status_timer.stop()
             if self.net:
                 self.net.teardown()
-            self.silencer.restore()
         finally:
             e.accept()
 
@@ -894,11 +829,6 @@ class LagSwitchWindow(QtWidgets.QWidget):
 def main():
     if not is_admin():
         relaunch_as_admin()
-
-    try:
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Legman.LagSwitch")
-    except Exception:
-        pass
 
     app = QtWidgets.QApplication(sys.argv)
     app.setApplicationName("Legman LagSwitch")

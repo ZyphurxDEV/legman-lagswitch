@@ -21,8 +21,6 @@ While running:
 - **Your bind** cuts / restores traffic.
 - **Esc** = panic key — force-restores traffic no matter what.
 - **stop** or closing the window restores traffic and cleans up automatically.
-- Windows toast notifications are silenced while active (and restored after),
-  so nothing pops over your game.
 
 ## Methods
 
@@ -60,11 +58,10 @@ pydivert`) and the icon, produces `LagSwitch.exe`, and cleans up after itself.
 The exe is ~42 MB because the Qt runtime and WinDivert driver are bundled.
 
 ## Uninstalling
-Run **`uninstall.bat`** — it asks for confirmation, then closes the app, removes
-the firewall rules (via a UAC prompt), deletes the saved settings folder
-(`%APPDATA%\LegmanLagSwitch`), and re-enables Windows notifications in case a
-crash left them off. `LagSwitch.exe` is left in place — delete it yourself
-afterwards if you want.
+Run **`uninstall.bat`** — it asks for confirmation, then closes the app, unloads
+the WinDivert driver, removes the firewall rules (via a UAC prompt), and deletes
+the saved settings folder (`%APPDATA%\LegmanLagSwitch`). `LagSwitch.exe` is left
+in place — delete it yourself afterwards if you want.
 
 ## Notes
 - Windows SmartScreen / antivirus may false-positive flag the exe (unsigned,
