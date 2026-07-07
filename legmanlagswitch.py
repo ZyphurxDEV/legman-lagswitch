@@ -195,6 +195,36 @@ class DhcpController:
             self.disabled = False
 
 
+_windivert_ready = False
+
+
+def _prepare_windivert_driver():
+    """Load WinDivert's .dll/.sys from a persistent folder instead of the
+    onefile temp dir. The driver .sys gets locked by the kernel service, and if
+    it lives in PyInstaller's _MEIxxxx temp dir that lock makes exit-cleanup
+    fail ("Failed to remove temporary directory"). Copying it next to a stable
+    path keeps _MEIxxxx free of anything locked, so cleanup always succeeds."""
+    global _windivert_ready
+    if _windivert_ready:
+        return
+    import shutil
+    import pydivert.windivert_dll as wdll
+    src_dir = os.path.dirname(wdll.__file__)
+    dst_dir = os.path.join(DATA_DIR, "windivert")
+    os.makedirs(dst_dir, exist_ok=True)
+    for name in ("WinDivert64.dll", "WinDivert64.sys"):
+        src, dst = os.path.join(src_dir, name), os.path.join(dst_dir, name)
+        if os.path.exists(src) and not os.path.exists(dst):
+            try:
+                shutil.copy2(src, dst)
+            except OSError:
+                pass
+    dll = os.path.join(dst_dir, "WinDivert64.dll")
+    if os.path.exists(dll):
+        wdll.DLL_PATH = dll
+    _windivert_ready = True
+
+
 class WinDivertController:
     """Roblox-targeted packet drop via the WinDivert driver (pydivert).
 
@@ -213,6 +243,7 @@ class WinDivertController:
 
     def setup(self):
         import pydivert
+        _prepare_windivert_driver()
         with pydivert.WinDivert("false", flags=pydivert.Flag.SNIFF):
             pass
 
