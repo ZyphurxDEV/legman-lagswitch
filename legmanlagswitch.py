@@ -301,6 +301,15 @@ class WinDivertController:
 
     def teardown(self):
         self.enable()
+        self._release_driver()
+
+    @staticmethod
+    def _release_driver():
+        """Unload the WinDivert kernel driver on exit. Otherwise its service
+        stays running and keeps WinDivert64.sys locked, so the app's folder
+        can't be deleted until reboot. WinDivert reinstalls itself on next use."""
+        for verb in ("stop", "delete"):
+            _run(["sc", verb, "WinDivert"], check=False)
 
 
 def make_controller(method):
