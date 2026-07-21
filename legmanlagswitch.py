@@ -1,4 +1,3 @@
-
 import os
 import sys
 import json
@@ -33,13 +32,11 @@ PANIC_VK = 0x1B
 DEFAULTS = {"vk": 0x45, "key_name": "E", "mode": "toggle", "method": "firewall"}
 
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Keyboard input via polling (no hook -> not blocked by game anti-cheat)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 _user32 = ctypes.windll.user32
 _user32.GetAsyncKeyState.restype = ctypes.c_short
 _user32.GetAsyncKeyState.argtypes = [ctypes.c_int]
+
+_SCAN_VKS = range(0x07, 0xFF)
 
 
 def key_down(vk):
@@ -47,7 +44,7 @@ def key_down(vk):
 
 
 def any_key_down():
-    return any(key_down(vk) for vk in range(0x07, 0xFF))
+    return any(key_down(vk) for vk in _SCAN_VKS)
 
 
 def capture_key():
@@ -55,9 +52,7 @@ def capture_key():
     while any_key_down():
         time.sleep(0.01)
     while True:
-        for vk in range(0x07, 0xFF):
-            if vk in (0x01, 0x02, 0x04):
-                continue
+        for vk in _SCAN_VKS:
             if key_down(vk):
                 return vk
         time.sleep(0.005)
@@ -70,10 +65,6 @@ def vk_name(vk):
         return buf.value
     return f"VK_0x{vk:02X}"
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Elevation
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def is_admin():
     try:
@@ -90,10 +81,6 @@ def relaunch_as_admin():
             None, "LagSwitch needs admin rights to run.", "LagSwitch", 0x10)
     sys.exit(0)
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Network controllers
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def _run(cmd, check=True):
     return subprocess.run(
@@ -316,10 +303,6 @@ def make_controller(method):
     return FirewallController()
 
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Config
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 def _valid_vk(vk):
     return isinstance(vk, int) and 0x07 <= vk <= 0xFE
 
@@ -359,10 +342,6 @@ def save_config(cfg):
     except OSError:
         pass
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Qt: styling (matches Legman Tracker)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 STYLESHEET = """
 #card {
@@ -476,10 +455,6 @@ def app_icon_pixmap(size=26):
     pm.setDevicePixelRatio(dpr)
     return pm
 
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Qt: widgets
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Signals(QtCore.QObject):
     bind_captured = QtCore.Signal(int)
